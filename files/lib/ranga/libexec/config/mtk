@@ -1,0 +1,99 @@
+#!/bin/sh
+
+. /etc/ranga/pub.sh
+. ${NSWA_PREFIX}/lib/config.sh
+. ${NSWA_PREFIX}/lib/auth.sh
+
+auth || exit 3
+
+[ -f /etc/ranga/components/9ad537b5-591a-4275-8bda-7ba950566553 ] && mt7612e='1'
+[ -f /etc/ranga/components/987431c8-687b-4ea9-a27c-5e0fd3a37ba5 ] && rt2860='1'
+
+mode="linux-wireless-only"$'\n'
+[ -n "$rt2860" ] && mode="${mode}rt2860-mtk-with-any5ghz-linux-wireless"$'\n'
+[ -n "$mt7612e" -a -n "$rt2860" ] && mode="${mode}rt2860-mtk-with-mt7612e-mtk"$'\n'
+
+id_5ghz="0"
+id_2dot4ghz="0"
+uci get wireless.radio1 > /dev/null 2>&1 && id_2dot4ghz="1"
+
+mtk_rt2860_on() {
+	rm -f /etc/modules.d/rt2800-soc
+
+	ln -s /lib/mtkdrv/rt2860/00-mtk.sh "${NSWA_PREFIX}/hooks/reldwl.d/00-mtk.sh"
+
+	mkdir -p "/etc/ranga/wificap/${id_2dot4ghz}"
+	ln -s /lib/mtkdrv/rt2860/cap.htmode  "/etc/ranga/wificap/${id_2dot4ghz}/htmode"
+	ln -s /lib/mtkdrv/rt2860/cap.channel  "/etc/ranga/wificap/${id_2dot4ghz}/channel"
+}
+
+mtk_rt2860_off() {
+	rm -f "${NSWA_PREFIX}/hooks/reldwl.d/00-mtk.sh"
+	rm -f /overlay/upper/etc/modules.d/rt2800-soc
+	rm -rf "/etc/ranga/wificap/${id_2dot4ghz}"
+}
+
+mtk_mt7612e_on() {
+	rm -f /etc/modules.d/mt76x2e
+	rm -f /etc/modules.d/mt76x2
+	rm -r /etc/modules.d/mt7603
+
+	ln -s /lib/mtkdrv/mt7612e/00-mtk.sh "${NSWA_PREFIX}/hooks/reldwl.d/00-mtk5g.sh"
+
+	mkdir -p "/etc/ranga/wificap/${id_5ghz}"
+	ln -s /lib/mtkdrv/mt7612e/cap.htmode  "/etc/ranga/wificap/${id_5ghz}/htmode"
+	ln -s /lib/mtkdrv/mt7612e/cap.channel  "/etc/ranga/wificap/${id_5ghz}/channel"
+}
+
+mtk_mt7612e_off() {
+	rm -f "${NSWA_PREFIX}/hooks/reldwl.d/00-mtk5g.sh"
+	rm -f /overlay/upper/etc/modules.d/mt76x2e
+	rm -f /overlay/upper/etc/modules.d/mt76x2
+	rm -r /overlay/upper/etc/modules.d/mt7603
+	rm -rf "/etc/ranga/wificap/${id_5ghz}"
+}
+
+case "$1" in
+ls-allowed-modes)
+	echo "$mode"
+	;;
+set-mode)
+	[ "$2" = "--no-reboot" ] && {
+		noreboot=1
+		shift
+	}
+	echo "$mode" | grep "^$2$" > /dev/null 2>&1 || exit 1
+	case "$2" in
+	linux-wireless-only)
+		rm -f "${NSWA_PREFIX}/hooks/lanbr.d/00-mtklan.sh"
+		[ -n "$mt7612e" ] && mtk_mt7612e_off
+		mtk_rt2860_off
+		;;
+	rt2860-mtk-with-any5ghz-linux-wireless)
+		ln -s -f /lib/mtkdrv/00-mtklan.sh "${NSWA_PREFIX}/hooks/lanbr.d/00-mtklan.sh"
+		[ -n "$mt7612e" ] && mtk_mt7612e_off
+		mtk_rt2860_on
+		;;
+	rt2860-mtk-with-mt7612e-mtk)
+		ln -s -f /lib/mtkdrv/00-mtklan.sh "${NSWA_PREFIX}/hooks/lanbr.d/00-mtklan.sh"
+		mtk_rt2860_on
+		mtk_mt7612e_on
+		;;
+	esac
+	sync
+	[ "$noreboot" = '1' ] || (sleep 2; reboot) < /dev/null > /dev/null 2>&1 &
+	;;
+cur-mode)
+	if [ -f "${NSWA_PREFIX}/hooks/lanbr.d/00-mtklan.sh" ]; then
+		[ -n "$mt7612e" -a -f "${NSWA_PREFIX}/hooks/reldwl.d/00-mtk5g.sh" ] && echo 'rt2860-mtk-with-mt7612e-mtk' && exit 0
+		[ -n "$rt2860" -a -f "${NSWA_PREFIX}/hooks/reldwl.d/00-mtk.sh" ] && echo 'rt2860-mtk-with-any5ghz-linux-wireless' && exit 0
+	else
+		echo 'linux-wireless-only'
+	fi
+	;;
+*)
+	exit 1
+	;;
+esac
+
+exit 0

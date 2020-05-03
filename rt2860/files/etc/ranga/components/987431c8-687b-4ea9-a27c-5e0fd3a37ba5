@@ -1,0 +1,6 @@
+name: MT7620 2.4GHz proprietary driver
+version: 0.8.1~mtk2.7.1.6
+desc: 2.4GHz wireless MTK proprietary driver for the MT7620A/N platforms (RT2860 wireless chipset). This driver may not work for all devices which used this chipset.
+actions: Additional driver selection@/mtk-radio/
+name[zh_CN]: MT7620 2.4GHz 专有驱动程序
+actions[zh_CN]: 附加驱动选择@/mtk-radio/

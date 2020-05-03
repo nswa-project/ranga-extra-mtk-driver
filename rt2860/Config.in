@@ -1,0 +1,4 @@
+config RANGA_MTK_RT2860_LED_SYSFS
+	depends on PACKAGE_kmod-ranga-mt7620
+	string "LED sysfs"
+

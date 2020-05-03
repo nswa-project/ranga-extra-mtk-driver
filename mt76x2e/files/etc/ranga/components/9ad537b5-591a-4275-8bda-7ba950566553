@@ -1,0 +1,5 @@
+name: MT7612E proprietary radio driver (for MT7620)
+version: 0.5.2~mtk3.0.4.0
+desc: 5GHz wireless MTK proprietary driver for the MT7620A/N platforms (mt7612e wifi chip).
+actions: Additional driver selection@/mtk-radio/
+actions[zh_CN]: 附加驱动选择@/mtk-radio/

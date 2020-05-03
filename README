@@ -1,3 +1,15 @@
+this repo contains the wl api translation-layer for Ranga system
+(ranga API -> linux tools -> mac80211/cfg80211 driver)
+(ranga API -> {THIS REPO} -> mtk driver)
+And with a switch system that allows you to switch open-source/mtk drivers
+
+- MTK DRIVER IS NOT INCLUEDD -
+
 - YOU NEED HAVE PERMISION FROM MediaTek TO USE MTK DRIVERS -
 
 - AFTER YOU GET SOURCE OF DRIVERS FROM MediaTek, PUT THEME TO THIS REPO TO COMPILE -
+
+rt2860v2 -> rt2860/rt2860v2 (see rt2860/rt2860v2/README to modify your code)
+mt76x2e  -> mt76x2e/src
+            mt76x2e/files/etc/wireless/mt7612e/SingleSKU.dat
+            
